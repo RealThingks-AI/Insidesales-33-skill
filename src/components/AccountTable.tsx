@@ -544,12 +544,12 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
       </div>
 
       {/* Table */}
-      <Card className="flex-1 min-h-0 flex flex-col overflow-hidden">
-        <div className="overflow-auto flex-1">
+      <Card className="flex-1 min-h-0 flex flex-col">
+        <div className="relative overflow-auto flex-1">
           <Table>
-            <TableHeader className="sticky top-0 z-10 bg-background">
+            <TableHeader className="bg-background">
               <TableRow className="bg-muted/50 hover:bg-muted/60 border-b-2">
-                <TableHead className="w-12 text-center font-bold text-foreground bg-muted/50">
+                <TableHead className="sticky top-0 z-20 w-12 text-center font-bold text-foreground bg-muted/50">
                   <div className="flex justify-center">
                     <Checkbox 
                       checked={selectedAccounts.length > 0 && selectedAccounts.length === Math.min(pageAccounts.length, 50)} 
@@ -560,7 +560,7 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
                 {visibleColumns.map(column => (
                   <TableHead 
                     key={column.field} 
-                    className="text-left font-bold text-foreground bg-muted/50 px-4 py-3 whitespace-nowrap"
+                    className="sticky top-0 z-20 text-left font-bold text-foreground bg-muted/50 px-4 py-3 whitespace-nowrap"
                   >
                     <div 
                       className="group flex items-center gap-2 cursor-pointer hover:text-primary" 
@@ -571,7 +571,7 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
                     </div>
                   </TableHead>
                 ))}
-                <TableHead className="text-center font-bold text-foreground bg-muted/50 w-32 px-4 py-3">
+                <TableHead className="sticky top-0 z-20 text-center font-bold text-foreground bg-muted/50 w-32 px-4 py-3">
                   Actions
                 </TableHead>
               </TableRow>
