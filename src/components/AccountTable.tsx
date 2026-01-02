@@ -486,7 +486,7 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col h-full space-y-3">
       {/* Header and Actions */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3 flex-wrap">
@@ -544,10 +544,10 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
       </div>
 
       {/* Table */}
-      <Card>
-        <div className="overflow-auto max-h-[calc(100vh-280px)]">
+      <Card className="flex-1 min-h-0 flex flex-col overflow-hidden">
+        <div className="overflow-auto flex-1">
           <Table>
-            <TableHeader className="sticky top-0 z-10">
+            <TableHeader className="sticky top-0 z-10 bg-background">
               <TableRow className="bg-muted/50 hover:bg-muted/60 border-b-2">
                 <TableHead className="w-12 text-center font-bold text-foreground bg-muted/50">
                   <div className="flex justify-center">
