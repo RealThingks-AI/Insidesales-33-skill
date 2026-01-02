@@ -215,17 +215,17 @@ export const TaskListView = ({
       <Card>
         <div className="overflow-auto max-h-[calc(100vh-280px)]">
           <Table>
-            <TableHeader className="sticky top-0 z-10">
+            <TableHeader className="bg-background">
               <TableRow className="bg-muted/50">
-              <TableHead className="w-10"></TableHead>
-              <TableHead>Task</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Priority</TableHead>
-              <TableHead>Due Date</TableHead>
-              <TableHead>Assigned To</TableHead>
-              <TableHead>Linked To</TableHead>
-              <TableHead>Task Owner</TableHead>
-              <TableHead className="w-20">Actions</TableHead>
+              <TableHead className="sticky top-0 z-20 bg-muted/50 w-10"></TableHead>
+              <TableHead className="sticky top-0 z-20 bg-muted/50">Task</TableHead>
+              <TableHead className="sticky top-0 z-20 bg-muted/50">Status</TableHead>
+              <TableHead className="sticky top-0 z-20 bg-muted/50">Priority</TableHead>
+              <TableHead className="sticky top-0 z-20 bg-muted/50">Due Date</TableHead>
+              <TableHead className="sticky top-0 z-20 bg-muted/50">Assigned To</TableHead>
+              <TableHead className="sticky top-0 z-20 bg-muted/50">Linked To</TableHead>
+              <TableHead className="sticky top-0 z-20 bg-muted/50">Task Owner</TableHead>
+              <TableHead className="sticky top-0 z-20 bg-muted/50 w-20">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
