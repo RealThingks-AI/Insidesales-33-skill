@@ -573,13 +573,6 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
                       </TableCell>)}
                     <TableCell className="w-20 px-4 py-3">
                       <div className="flex items-center justify-center gap-1">
-                        {/* Quick view button on hover */}
-                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => {
-                    setViewingAccount(account);
-                    setShowDetailModal(true);
-                  }}>
-                          <Eye className="w-4 h-4" />
-                        </Button>
                         <RowActionsDropdown actions={[{
                     label: "View",
                     icon: <Eye className="w-4 h-4" />,
