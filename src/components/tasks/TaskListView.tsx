@@ -213,9 +213,10 @@ export const TaskListView = ({
 
       {/* Task Table */}
       <Card>
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50">
+        <div className="overflow-auto max-h-[calc(100vh-280px)]">
+          <Table>
+            <TableHeader className="sticky top-0 z-10">
+              <TableRow className="bg-muted/50">
               <TableHead className="w-10"></TableHead>
               <TableHead>Task</TableHead>
               <TableHead>Status</TableHead>
@@ -353,6 +354,7 @@ export const TaskListView = ({
             )}
           </TableBody>
         </Table>
+        </div>
       </Card>
 
       <DeleteConfirmDialog

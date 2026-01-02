@@ -615,7 +615,7 @@ const LeadTable = forwardRef<LeadTableRef, LeadTableProps>(({
 
       {/* Table */}
       <Card>
-        <div className="overflow-auto">
+        <div className="overflow-auto max-h-[calc(100vh-280px)]">
           {loading ? (
             <TableSkeleton columns={visibleColumns.length + 2} rows={10} />
           ) : (

@@ -545,7 +545,7 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
 
       {/* Table */}
       <Card>
-        <div className="overflow-auto">
+        <div className="overflow-auto max-h-[calc(100vh-280px)]">
           <Table>
             <TableHeader className="sticky top-0 z-10">
               <TableRow className="bg-muted/50 hover:bg-muted/60 border-b-2">

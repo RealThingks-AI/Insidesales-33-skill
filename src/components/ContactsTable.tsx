@@ -167,10 +167,10 @@ const ContactsTable = ({ columns, contacts, onEditContact, onDeleteContact }: Co
           />
         )}
 
-        <div className="overflow-x-auto">
+        <div className="overflow-auto max-h-[calc(100vh-280px)]">
           <Table>
-            <TableHeader>
-              <TableRow>
+            <TableHeader className="sticky top-0 z-10 bg-background">
+              <TableRow className="bg-muted/50">
                 <TableHead className="w-[50px]">
                   <Checkbox
                     checked={isAllSelected}
