@@ -100,9 +100,15 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 // App Router Component - inside the auth context
+// Lazy load test page
+import StickyHeaderTest from "./pages/StickyHeaderTest";
+
+// App Router Component - inside the auth context
 const AppRouter = () => (
   <BrowserRouter>
     <Routes>
+      {/* Public test route for sticky header verification */}
+      <Route path="/sticky-header-test" element={<StickyHeaderTest />} />
       <Route path="/auth" element={
         <AuthRoute>
           <Auth />
