@@ -533,14 +533,14 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
                               <HighlightedText text={account.company_name} highlight={searchTerm} />
                             </button>
                           </div> : column.field === 'account_owner' ? <span className="truncate block">
-                            {account.account_owner ? displayNames[account.account_owner] || "Loading..." : '-'}
+                            {account.account_owner ? displayNames[account.account_owner] || "Loading..." : <span className="block text-center w-full">-</span>}
                           </span> : column.field === 'status' && account.status ? <Badge variant="outline" className={`whitespace-nowrap ${getStatusBadgeClasses(account.status)}`}>
                             {account.status}
                           </Badge> : column.field === 'score' ? <span className={`font-medium ${(account.score || 0) >= 70 ? 'text-green-600 dark:text-green-400' : (account.score || 0) >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}>
-                            {account.score ?? '-'}
+                            {account.score ?? <span className="block text-center w-full">-</span>}
                           </span> : column.field === 'segment' ? account.segment ? <Badge variant="outline" className="text-xs">
                               {account.segment}
-                            </Badge> : '-' : column.field === 'total_revenue' ? <span className="font-medium">{formatCurrency(account.total_revenue)}</span> : column.field === 'deal_count' ? <span>{account.deal_count ?? 0}</span> : column.field === 'contact_count' ? <span>{account.contact_count ?? 0}</span> : column.field === 'tags' && account.tags ? <TooltipProvider>
+                            </Badge> : <span className="block text-center w-full">-</span> : column.field === 'total_revenue' ? <span className="font-medium">{formatCurrency(account.total_revenue)}</span> : column.field === 'deal_count' ? <span>{account.deal_count ?? 0}</span> : column.field === 'contact_count' ? <span>{account.contact_count ?? 0}</span> : column.field === 'tags' ? (account.tags && account.tags.length > 0 ? <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <div className="flex items-center gap-1">
@@ -563,12 +563,12 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
                                 </div>
                               </TooltipContent>
                             </Tooltip>
-                          </TooltipProvider> : column.field === 'website' && account.website ? <a href={account.website.startsWith('http') ? account.website : `https://${account.website}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                          </TooltipProvider> : <span className="block text-center w-full">-</span>) : column.field === 'website' ? (account.website ? <a href={account.website.startsWith('http') ? account.website : `https://${account.website}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
                             <span className="truncate max-w-[150px]">
                               {account.website.replace(/^https?:\/\//, '')}
                             </span>
-                          </a> : column.field === 'industry' ? <HighlightedText text={account.industry} highlight={searchTerm} /> : column.field === 'country' ? <HighlightedText text={account.country} highlight={searchTerm} /> : column.field === 'email' ? <HighlightedText text={account.email} highlight={searchTerm} className="text-center" /> : <span title={account[column.field as keyof Account]?.toString() || '-'} className="truncate block text-center">
-                            {account[column.field as keyof Account]?.toString() || '-'}
+                          </a> : <span className="block text-center w-full">-</span>) : column.field === 'industry' ? <HighlightedText text={account.industry} highlight={searchTerm} /> : column.field === 'country' ? <HighlightedText text={account.country} highlight={searchTerm} /> : column.field === 'email' ? <HighlightedText text={account.email} highlight={searchTerm} className="text-center" /> : <span title={account[column.field as keyof Account]?.toString() || '-'} className="truncate block text-center">
+                            {account[column.field as keyof Account]?.toString() || <span className="block text-center w-full">-</span>}
                           </span>}
                       </TableCell>)}
                     <TableCell className="w-20 px-4 py-3">
