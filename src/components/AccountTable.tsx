@@ -30,7 +30,6 @@ import { useQuery } from "@tanstack/react-query";
 export interface AccountTableRef {
   handleBulkDelete: () => Promise<void>;
 }
-
 export interface Account {
   id: string;
   company_name: string;
@@ -55,7 +54,6 @@ export interface Account {
   deal_count?: number;
   contact_count?: number;
 }
-
 interface AccountTableProps {
   showColumnCustomizer: boolean;
   setShowColumnCustomizer: (show: boolean) => void;
@@ -66,9 +64,7 @@ interface AccountTableProps {
   onBulkDeleteComplete?: () => void;
   initialStatus?: string;
 }
-
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
-
 const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
   showColumnCustomizer,
   setShowColumnCustomizer,
@@ -79,8 +75,12 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
   onBulkDeleteComplete,
   initialStatus = "all"
 }, ref) => {
-  const { toast } = useToast();
-  const { logDelete } = useCRUDAudit();
+  const {
+    toast
+  } = useToast();
+  const {
+    logDelete
+  } = useCRUDAudit();
   const [searchParams, setSearchParams] = useSearchParams();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [filteredAccounts, setFilteredAccounts] = useState<Account[]>([]);
@@ -88,14 +88,18 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  
+
   // Column preferences hook
-  const { columns, saveColumns, isSaving } = useColumnPreferences({
+  const {
+    columns,
+    saveColumns,
+    isSaving
+  } = useColumnPreferences({
     moduleName: 'accounts',
-    defaultColumns: defaultAccountColumns,
+    defaultColumns: defaultAccountColumns
   });
   const [localColumns, setLocalColumns] = useState<AccountColumnConfig[]>(columns);
-  
+
   // Sync local columns when saved columns change
   useEffect(() => {
     setLocalColumns(columns);
@@ -109,7 +113,11 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
   // Fetch current user ID for "me" filtering
   useEffect(() => {
     const fetchCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       if (user) {
         setCurrentUserId(user.id);
         // If owner=me in URL, set the owner filter to current user's ID
@@ -134,7 +142,6 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
       setOwnerFilter('all');
     }
   }, [ownerParam, currentUserId]);
-
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
@@ -160,7 +167,9 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
         setSearchParams(prev => {
           prev.delete('viewId');
           return prev;
-        }, { replace: true });
+        }, {
+          replace: true
+        });
       }
     }
   }, [viewId, accounts, setSearchParams]);
@@ -171,66 +180,50 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
   }), [selectedAccounts, accounts]);
 
   // Fetch all profiles for owner dropdown
-  const { data: allProfiles = [] } = useQuery({
+  const {
+    data: allProfiles = []
+  } = useQuery({
     queryKey: ['all-profiles'],
     queryFn: async () => {
-      const { data } = await supabase.from('profiles').select('id, full_name');
+      const {
+        data
+      } = await supabase.from('profiles').select('id, full_name');
       return data || [];
-    },
+    }
   });
-
   useEffect(() => {
     fetchAccounts();
   }, []);
-
   useEffect(() => {
     const searchLower = searchTerm.toLowerCase();
-    let filtered = accounts.filter(account => 
-      account.company_name?.toLowerCase().includes(searchLower) || 
-      account.industry?.toLowerCase().includes(searchLower) || 
-      account.country?.toLowerCase().includes(searchLower) ||
-      account.email?.toLowerCase().includes(searchLower) ||
-      account.phone?.toLowerCase().includes(searchLower) ||
-      account.website?.toLowerCase().includes(searchLower) ||
-      account.notes?.toLowerCase().includes(searchLower) ||
-      account.company_type?.toLowerCase().includes(searchLower) ||
-      account.region?.toLowerCase().includes(searchLower) ||
-      account.segment?.toLowerCase().includes(searchLower) ||
-      account.tags?.some(tag => tag.toLowerCase().includes(searchLower))
-    );
-    
+    let filtered = accounts.filter(account => account.company_name?.toLowerCase().includes(searchLower) || account.industry?.toLowerCase().includes(searchLower) || account.country?.toLowerCase().includes(searchLower) || account.email?.toLowerCase().includes(searchLower) || account.phone?.toLowerCase().includes(searchLower) || account.website?.toLowerCase().includes(searchLower) || account.notes?.toLowerCase().includes(searchLower) || account.company_type?.toLowerCase().includes(searchLower) || account.region?.toLowerCase().includes(searchLower) || account.segment?.toLowerCase().includes(searchLower) || account.tags?.some(tag => tag.toLowerCase().includes(searchLower)));
     if (statusFilter !== "all") {
       filtered = filtered.filter(account => account.status === statusFilter);
     }
-    
+
     // FIX: Use account_owner instead of created_by for owner filtering
     if (ownerFilter !== "all") {
       filtered = filtered.filter(account => account.account_owner === ownerFilter);
     }
-    
     if (tagFilter) {
       filtered = filtered.filter(account => account.tags?.includes(tagFilter));
     }
-    
     if (sortField) {
       filtered.sort((a, b) => {
         const aValue = a[sortField as keyof Account] || '';
         const bValue = b[sortField as keyof Account] || '';
-        
+
         // Handle numeric sorting for score, revenue, counts
         if (typeof aValue === 'number' && typeof bValue === 'number') {
           return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
         }
-        
         const comparison = aValue.toString().localeCompare(bValue.toString());
         return sortDirection === 'asc' ? comparison : -comparison;
       });
     }
-    
     setFilteredAccounts(filtered);
     setCurrentPage(1);
   }, [accounts, searchTerm, statusFilter, ownerFilter, tagFilter, sortField, sortDirection]);
-
   const handleSort = (field: string) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -239,22 +232,21 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
       setSortDirection('asc');
     }
   };
-
   const getSortIcon = (field: string) => {
     if (sortField !== field) {
       return <ArrowUpDown className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />;
     }
     return sortDirection === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />;
   };
-
   const fetchAccounts = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('accounts')
-        .select('*')
-        .order('created_at', { ascending: false });
-        
+      const {
+        data,
+        error
+      } = await supabase.from('accounts').select('*').order('created_at', {
+        ascending: false
+      });
       if (error) throw error;
       setAccounts(data || []);
     } catch (error) {
@@ -267,24 +259,17 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
       setLoading(false);
     }
   };
-
   const handleDelete = async () => {
     if (!accountToDelete?.id) return;
     try {
       // Check for linked contacts/leads
-      const { data: linkedContacts } = await supabase
-        .from('contacts')
-        .select('id')
-        .eq('account_id', accountToDelete.id)
-        .limit(1);
-        
-      const { data: linkedLeads } = await supabase
-        .from('leads')
-        .select('id')
-        .eq('account_id', accountToDelete.id)
-        .limit(1);
-        
-      if ((linkedContacts && linkedContacts.length > 0) || (linkedLeads && linkedLeads.length > 0)) {
+      const {
+        data: linkedContacts
+      } = await supabase.from('contacts').select('id').eq('account_id', accountToDelete.id).limit(1);
+      const {
+        data: linkedLeads
+      } = await supabase.from('leads').select('id').eq('account_id', accountToDelete.id).limit(1);
+      if (linkedContacts && linkedContacts.length > 0 || linkedLeads && linkedLeads.length > 0) {
         toast({
           title: "Cannot Delete",
           description: "This account has linked contacts or leads. Please unlink them first.",
@@ -293,21 +278,15 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
         setShowDeleteDialog(false);
         return;
       }
-      
-      const { error } = await supabase
-        .from('accounts')
-        .delete()
-        .eq('id', accountToDelete.id);
-        
+      const {
+        error
+      } = await supabase.from('accounts').delete().eq('id', accountToDelete.id);
       if (error) throw error;
-      
       await logDelete('accounts', accountToDelete.id, accountToDelete);
-      
       toast({
         title: "Success",
         description: "Account deleted successfully"
       });
-      
       fetchAccounts();
       setAccountToDelete(null);
       setShowDeleteDialog(false);
@@ -323,28 +302,18 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
   // Bulk delete handler
   const handleBulkDelete = async () => {
     if (selectedAccounts.length === 0) return;
-    
     setIsBulkDeleting(true);
     try {
       // Check for linked entities for all selected accounts
-      const { data: linkedContacts } = await supabase
-        .from('contacts')
-        .select('account_id')
-        .in('account_id', selectedAccounts);
-        
-      const { data: linkedLeads } = await supabase
-        .from('leads')
-        .select('account_id')
-        .in('account_id', selectedAccounts);
-      
-      const accountsWithLinks = new Set([
-        ...(linkedContacts || []).map(c => c.account_id),
-        ...(linkedLeads || []).map(l => l.account_id)
-      ]);
-      
+      const {
+        data: linkedContacts
+      } = await supabase.from('contacts').select('account_id').in('account_id', selectedAccounts);
+      const {
+        data: linkedLeads
+      } = await supabase.from('leads').select('account_id').in('account_id', selectedAccounts);
+      const accountsWithLinks = new Set([...(linkedContacts || []).map(c => c.account_id), ...(linkedLeads || []).map(l => l.account_id)]);
       const deletableAccounts = selectedAccounts.filter(id => !accountsWithLinks.has(id));
       const skippedCount = selectedAccounts.length - deletableAccounts.length;
-      
       if (deletableAccounts.length === 0) {
         toast({
           title: "Cannot Delete",
@@ -354,14 +323,11 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
         setIsBulkDeleting(false);
         return;
       }
-      
-      const { error } = await supabase
-        .from('accounts')
-        .delete()
-        .in('id', deletableAccounts);
-        
+      const {
+        error
+      } = await supabase.from('accounts').delete().in('id', deletableAccounts);
       if (error) throw error;
-      
+
       // Log deletions
       for (const id of deletableAccounts) {
         const account = accounts.find(a => a.id === id);
@@ -369,14 +335,10 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
           await logDelete('accounts', id, account);
         }
       }
-      
       toast({
         title: "Success",
-        description: skippedCount > 0 
-          ? `Deleted ${deletableAccounts.length} accounts. ${skippedCount} skipped (have linked records).`
-          : `Deleted ${deletableAccounts.length} accounts successfully`
+        description: skippedCount > 0 ? `Deleted ${deletableAccounts.length} accounts. ${skippedCount} skipped (have linked records).` : `Deleted ${deletableAccounts.length} accounts successfully`
       });
-      
       setSelectedAccounts([]);
       fetchAccounts();
       onBulkDeleteComplete?.();
@@ -390,7 +352,6 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
       setIsBulkDeleting(false);
     }
   };
-
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       const pageAccounts = getCurrentPageAccounts().slice(0, 50);
@@ -399,7 +360,6 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
       setSelectedAccounts([]);
     }
   };
-
   const handleSelectAccount = (accountId: string, checked: boolean) => {
     if (checked) {
       setSelectedAccounts(prev => [...prev, accountId]);
@@ -407,34 +367,30 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
       setSelectedAccounts(prev => prev.filter(id => id !== accountId));
     }
   };
-
   const getCurrentPageAccounts = () => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredAccounts.slice(startIndex, startIndex + itemsPerPage);
   };
-
   const totalPages = Math.ceil(filteredAccounts.length / itemsPerPage);
 
   // Get owner IDs for display names - use account_owner instead of created_by
   const ownerIds = useMemo(() => {
     return [...new Set(accounts.map(a => a.account_owner).filter(Boolean))];
   }, [accounts]);
-
-  const { displayNames } = useUserDisplayNames(ownerIds);
-
+  const {
+    displayNames
+  } = useUserDisplayNames(ownerIds);
   const visibleColumns = localColumns.filter(col => col.visible);
   const pageAccounts = getCurrentPageAccounts();
 
   // Check if any filters are active
   const hasActiveFilters = searchTerm !== "" || statusFilter !== "all" || ownerFilter !== "all" || tagFilter !== null;
-
   const clearAllFilters = () => {
     setSearchTerm("");
     setStatusFilter("all");
     setOwnerFilter("all");
     setTagFilter(null);
   };
-
   const getStatusBadgeClasses = (status?: string) => {
     switch (status) {
       case 'Hot':
@@ -458,23 +414,15 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
 
   // Generate initials from company name
   const getCompanyInitials = (name: string) => {
-    return name
-      .split(' ')
-      .slice(0, 2)
-      .map(word => word.charAt(0).toUpperCase())
-      .join('');
+    return name.split(' ').slice(0, 2).map(word => word.charAt(0).toUpperCase()).join('');
   };
 
   // Generate consistent color from company name
   const getAvatarColor = (name: string) => {
-    const colors = [
-      'bg-slate-500', 'bg-slate-600', 'bg-zinc-500', 'bg-gray-500', 
-      'bg-stone-500', 'bg-neutral-500', 'bg-slate-700', 'bg-zinc-600'
-    ];
+    const colors = ['bg-slate-500', 'bg-slate-600', 'bg-zinc-500', 'bg-gray-500', 'bg-stone-500', 'bg-neutral-500', 'bg-slate-700', 'bg-zinc-600'];
     const index = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
     return colors[index];
   };
-
   const formatCurrency = (value?: number) => {
     if (!value) return '-';
     return new Intl.NumberFormat('en-US', {
@@ -484,21 +432,13 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
       maximumFractionDigits: 1
     }).format(value);
   };
-
-  return (
-    <div className="flex flex-col h-full space-y-3">
+  return <div className="flex flex-col h-full space-y-3">
       {/* Header and Actions */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative w-64">
             <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
-            <Input 
-              placeholder="Search accounts..." 
-              value={searchTerm} 
-              onChange={e => setSearchTerm(e.target.value)} 
-              className="pl-9" 
-              inputSize="control" 
-            />
+            <Input placeholder="Search accounts..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9" inputSize="control" />
           </div>
           <AccountStatusFilter value={statusFilter} onValueChange={setStatusFilter} />
           <Select value={ownerFilter} onValueChange={setOwnerFilter}>
@@ -507,22 +447,18 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Owners</SelectItem>
-              {allProfiles.map((profile) => (
-                <SelectItem key={profile.id} value={profile.id}>
+              {allProfiles.map(profile => <SelectItem key={profile.id} value={profile.id}>
                   {profile.full_name || 'Unknown'}
-                </SelectItem>
-              ))}
+                </SelectItem>)}
             </SelectContent>
           </Select>
           
-          {tagFilter && (
-            <Badge variant="secondary" className="flex items-center gap-1">
+          {tagFilter && <Badge variant="secondary" className="flex items-center gap-1">
               Tag: {tagFilter}
               <button onClick={() => setTagFilter(null)} className="ml-1 hover:text-destructive">
                 <X className="w-3 h-3" />
               </button>
-            </Badge>
-          )}
+            </Badge>}
           
           <ClearFiltersButton hasActiveFilters={hasActiveFilters} onClear={clearAllFilters} />
         </div>
@@ -530,14 +466,12 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
         {/* Page size selector */}
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Show:</span>
-          <Select value={itemsPerPage.toString()} onValueChange={(val) => setItemsPerPage(Number(val))}>
+          <Select value={itemsPerPage.toString()} onValueChange={val => setItemsPerPage(Number(val))}>
             <SelectTrigger className="w-[70px] h-8">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {PAGE_SIZE_OPTIONS.map(size => (
-                <SelectItem key={size} value={size.toString()}>{size}</SelectItem>
-              ))}
+              {PAGE_SIZE_OPTIONS.map(size => <SelectItem key={size} value={size.toString()}>{size}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
@@ -551,325 +485,190 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
               <TableRow className="sticky top-0 z-20 bg-muted border-b-2">
                 <TableHead className="w-12 text-center font-bold text-foreground">
                   <div className="flex justify-center">
-                    <Checkbox 
-                      checked={selectedAccounts.length > 0 && selectedAccounts.length === Math.min(pageAccounts.length, 50)} 
-                      onCheckedChange={handleSelectAll} 
-                    />
+                    <Checkbox checked={selectedAccounts.length > 0 && selectedAccounts.length === Math.min(pageAccounts.length, 50)} onCheckedChange={handleSelectAll} />
                   </div>
                 </TableHead>
-                {visibleColumns.map(column => (
-                  <TableHead 
-                    key={column.field} 
-                    className="text-left font-bold text-foreground px-4 py-3 whitespace-nowrap"
-                  >
-                    <div 
-                      className="group flex items-center gap-2 cursor-pointer hover:text-primary" 
-                      onClick={() => handleSort(column.field)}
-                    >
+                {visibleColumns.map(column => <TableHead key={column.field} className="text-left font-bold text-foreground px-4 py-3 whitespace-nowrap">
+                    <div onClick={() => handleSort(column.field)} className="group gap-2 cursor-pointer hover:text-primary flex items-center justify-center">
                       {column.label}
                       {getSortIcon(column.field)}
                     </div>
-                  </TableHead>
-                ))}
+                  </TableHead>)}
                 <TableHead className="text-center font-bold text-foreground w-32 px-4 py-3">
                   Actions
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
-                <TableRow>
+              {loading ? <TableRow>
                   <TableCell colSpan={visibleColumns.length + 2} className="p-0">
                     <TableSkeleton columns={visibleColumns.length + 2} rows={10} />
                   </TableCell>
-                </TableRow>
-              ) : pageAccounts.length === 0 ? (
-                <TableRow>
+                </TableRow> : pageAccounts.length === 0 ? <TableRow>
                   <TableCell colSpan={visibleColumns.length + 2} className="text-center py-8">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Building2 className="w-10 h-10 opacity-50" />
                       <p>No accounts found</p>
-                      {hasActiveFilters && (
-                        <Button variant="link" size="sm" onClick={clearAllFilters}>
+                      {hasActiveFilters && <Button variant="link" size="sm" onClick={clearAllFilters}>
                           Clear filters
-                        </Button>
-                      )}
+                        </Button>}
                     </div>
                   </TableCell>
-                </TableRow>
-              ) : (
-                pageAccounts.map(account => (
-                  <TableRow 
-                    key={account.id} 
-                    className="hover:bg-muted/20 border-b group" 
-                    data-state={selectedAccounts.includes(account.id) ? "selected" : undefined}
-                  >
+                </TableRow> : pageAccounts.map(account => <TableRow key={account.id} className="hover:bg-muted/20 border-b group" data-state={selectedAccounts.includes(account.id) ? "selected" : undefined}>
                     <TableCell className="text-center px-4 py-3">
                       <div className="flex justify-center">
-                        <Checkbox 
-                          checked={selectedAccounts.includes(account.id)} 
-                          onCheckedChange={checked => handleSelectAccount(account.id, checked as boolean)} 
-                        />
+                        <Checkbox checked={selectedAccounts.includes(account.id)} onCheckedChange={checked => handleSelectAccount(account.id, checked as boolean)} />
                       </div>
                     </TableCell>
-                    {visibleColumns.map(column => (
-                      <TableCell 
-                        key={column.field} 
-                        className="text-left px-4 py-3 align-middle whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]"
-                      >
-                        {column.field === 'company_name' ? (
-                          <div className="flex items-center gap-2">
+                    {visibleColumns.map(column => <TableCell key={column.field} className="text-left px-4 py-3 align-middle whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">
+                        {column.field === 'company_name' ? <div className="flex items-center gap-2">
                             {/* Company Avatar */}
                             <div className={`w-8 h-8 rounded-full ${getAvatarColor(account.company_name)} flex items-center justify-center text-white text-xs font-medium shrink-0`}>
                               {getCompanyInitials(account.company_name)}
                             </div>
-                            <button 
-                              onClick={() => {
-                                setViewingAccount(account);
-                                setShowDetailModal(true);
-                              }} 
-                              className="text-primary hover:underline font-medium text-left truncate"
-                            >
+                            <button onClick={() => {
+                    setViewingAccount(account);
+                    setShowDetailModal(true);
+                  }} className="text-primary hover:underline font-medium text-left truncate">
                               <HighlightedText text={account.company_name} highlight={searchTerm} />
                             </button>
-                          </div>
-                        ) : column.field === 'account_owner' ? (
-                          <span className="truncate block">
+                          </div> : column.field === 'account_owner' ? <span className="truncate block">
                             {account.account_owner ? displayNames[account.account_owner] || "Loading..." : '-'}
-                          </span>
-                        ) : column.field === 'status' && account.status ? (
-                          <Badge variant="outline" className={`whitespace-nowrap ${getStatusBadgeClasses(account.status)}`}>
+                          </span> : column.field === 'status' && account.status ? <Badge variant="outline" className={`whitespace-nowrap ${getStatusBadgeClasses(account.status)}`}>
                             {account.status}
-                          </Badge>
-                        ) : column.field === 'score' ? (
-                          <span className={`font-medium ${(account.score || 0) >= 70 ? 'text-green-600 dark:text-green-400' : (account.score || 0) >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}>
+                          </Badge> : column.field === 'score' ? <span className={`font-medium ${(account.score || 0) >= 70 ? 'text-green-600 dark:text-green-400' : (account.score || 0) >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}>
                             {account.score ?? '-'}
-                          </span>
-                        ) : column.field === 'segment' ? (
-                          account.segment ? (
-                            <Badge variant="outline" className="text-xs">
+                          </span> : column.field === 'segment' ? account.segment ? <Badge variant="outline" className="text-xs">
                               {account.segment}
-                            </Badge>
-                          ) : '-'
-                        ) : column.field === 'total_revenue' ? (
-                          <span className="font-medium">{formatCurrency(account.total_revenue)}</span>
-                        ) : column.field === 'deal_count' ? (
-                          <span>{account.deal_count ?? 0}</span>
-                        ) : column.field === 'contact_count' ? (
-                          <span>{account.contact_count ?? 0}</span>
-                        ) : column.field === 'tags' && account.tags ? (
-                          <TooltipProvider>
+                            </Badge> : '-' : column.field === 'total_revenue' ? <span className="font-medium">{formatCurrency(account.total_revenue)}</span> : column.field === 'deal_count' ? <span>{account.deal_count ?? 0}</span> : column.field === 'contact_count' ? <span>{account.contact_count ?? 0}</span> : column.field === 'tags' && account.tags ? <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <div className="flex items-center gap-1">
-                                  <Badge 
-                                    variant="outline" 
-                                    className="text-xs truncate max-w-[100px] cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors" 
-                                    onClick={() => setTagFilter(account.tags![0])}
-                                  >
+                                  <Badge variant="outline" className="text-xs truncate max-w-[100px] cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors" onClick={() => setTagFilter(account.tags![0])}>
                                     {account.tags[0]}
                                   </Badge>
-                                  {account.tags.length > 1 && (
-                                    <Badge variant="outline" className="text-xs shrink-0">
+                                  {account.tags.length > 1 && <Badge variant="outline" className="text-xs shrink-0">
                                       +{account.tags.length - 1}
-                                    </Badge>
-                                  )}
+                                    </Badge>}
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent side="bottom" className="z-50">
                                 <div className="flex flex-col gap-1">
                                   <span className="font-medium text-xs">All tags:</span>
                                   <div className="flex flex-wrap gap-1 max-w-[280px]">
-                                    {account.tags.map((tag, idx) => (
-                                      <Badge 
-                                        key={idx} 
-                                        variant="secondary" 
-                                        className="text-xs cursor-pointer" 
-                                        onClick={() => setTagFilter(tag)}
-                                      >
+                                    {account.tags.map((tag, idx) => <Badge key={idx} variant="secondary" className="text-xs cursor-pointer" onClick={() => setTagFilter(tag)}>
                                         {tag}
-                                      </Badge>
-                                    ))}
+                                      </Badge>)}
                                   </div>
                                 </div>
                               </TooltipContent>
                             </Tooltip>
-                          </TooltipProvider>
-                        ) : column.field === 'website' && account.website ? (
-                          <a 
-                            href={account.website.startsWith('http') ? account.website : `https://${account.website}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="text-primary hover:underline flex items-center gap-1"
-                          >
+                          </TooltipProvider> : column.field === 'website' && account.website ? <a href={account.website.startsWith('http') ? account.website : `https://${account.website}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
                             <span className="truncate max-w-[150px]">
                               {account.website.replace(/^https?:\/\//, '')}
                             </span>
-                          </a>
-                        ) : column.field === 'industry' ? (
-                          <HighlightedText text={account.industry} highlight={searchTerm} />
-                        ) : column.field === 'country' ? (
-                          <HighlightedText text={account.country} highlight={searchTerm} />
-                        ) : column.field === 'email' ? (
-                          <HighlightedText text={account.email} highlight={searchTerm} />
-                        ) : (
-                          <span className="truncate block" title={account[column.field as keyof Account]?.toString() || '-'}>
+                          </a> : column.field === 'industry' ? <HighlightedText text={account.industry} highlight={searchTerm} /> : column.field === 'country' ? <HighlightedText text={account.country} highlight={searchTerm} /> : column.field === 'email' ? <HighlightedText text={account.email} highlight={searchTerm} className="text-center" /> : <span title={account[column.field as keyof Account]?.toString() || '-'} className="truncate block text-center">
                             {account[column.field as keyof Account]?.toString() || '-'}
-                          </span>
-                        )}
-                      </TableCell>
-                    ))}
+                          </span>}
+                      </TableCell>)}
                     <TableCell className="w-20 px-4 py-3">
                       <div className="flex items-center justify-center gap-1">
                         {/* Quick view button on hover */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => {
-                            setViewingAccount(account);
-                            setShowDetailModal(true);
-                          }}
-                        >
+                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => {
+                    setViewingAccount(account);
+                    setShowDetailModal(true);
+                  }}>
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <RowActionsDropdown
-                          actions={[
-                            {
-                              label: "View",
-                              icon: <Eye className="w-4 h-4" />,
-                              onClick: () => {
-                                setViewingAccount(account);
-                                setShowDetailModal(true);
-                              }
-                            },
-                            {
-                              label: "Edit",
-                              icon: <Edit className="w-4 h-4" />,
-                              onClick: () => {
-                                setEditingAccount(account);
-                                setShowModal(true);
-                              }
-                            },
-                            ...(account.email ? [{
-                              label: "Send Email",
-                              icon: <Mail className="w-4 h-4" />,
-                              onClick: () => {
-                                setEmailRecipient({
-                                  name: account.company_name,
-                                  email: account.email,
-                                  company_name: account.company_name
-                                });
-                                setEmailModalOpen(true);
-                              }
-                            }] : []),
-                            {
-                              label: "Delete",
-                              icon: <Trash2 className="w-4 h-4" />,
-                              onClick: () => {
-                                setAccountToDelete(account);
-                                setShowDeleteDialog(true);
-                              },
-                              destructive: true,
-                              separator: true
-                            }
-                          ]}
-                        />
+                        <RowActionsDropdown actions={[{
+                    label: "View",
+                    icon: <Eye className="w-4 h-4" />,
+                    onClick: () => {
+                      setViewingAccount(account);
+                      setShowDetailModal(true);
+                    }
+                  }, {
+                    label: "Edit",
+                    icon: <Edit className="w-4 h-4" />,
+                    onClick: () => {
+                      setEditingAccount(account);
+                      setShowModal(true);
+                    }
+                  }, ...(account.email ? [{
+                    label: "Send Email",
+                    icon: <Mail className="w-4 h-4" />,
+                    onClick: () => {
+                      setEmailRecipient({
+                        name: account.company_name,
+                        email: account.email,
+                        company_name: account.company_name
+                      });
+                      setEmailModalOpen(true);
+                    }
+                  }] : []), {
+                    label: "Delete",
+                    icon: <Trash2 className="w-4 h-4" />,
+                    onClick: () => {
+                      setAccountToDelete(account);
+                      setShowDeleteDialog(true);
+                    },
+                    destructive: true,
+                    separator: true
+                  }]} />
                       </div>
                     </TableCell>
-                  </TableRow>
-                ))
-              )}
+                  </TableRow>)}
             </TableBody>
           </Table>
         </div>
       </Card>
 
       {/* Pagination */}
-      {totalPages > 0 && (
-        <div className="flex items-center justify-between">
+      {totalPages > 0 && <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">
               Showing {filteredAccounts.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredAccounts.length)} of {filteredAccounts.length} accounts
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} 
-              disabled={currentPage === 1}
-            >
+            <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1}>
               <ChevronLeft className="w-4 h-4" />
               Previous
             </Button>
             <span className="text-sm">
               Page {currentPage} of {totalPages || 1}
             </span>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} 
-              disabled={currentPage === totalPages || totalPages === 0}
-            >
+            <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages || totalPages === 0}>
               Next
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
-        </div>
-      )}
+        </div>}
 
       {/* Modals */}
-      <AccountModal 
-        open={showModal} 
-        onOpenChange={open => {
-          setShowModal(open);
-          if (!open) setEditingAccount(null);
-        }} 
-        account={editingAccount} 
-        onSuccess={() => {
-          fetchAccounts();
-          setEditingAccount(null);
-        }} 
-      />
+      <AccountModal open={showModal} onOpenChange={open => {
+      setShowModal(open);
+      if (!open) setEditingAccount(null);
+    }} account={editingAccount} onSuccess={() => {
+      fetchAccounts();
+      setEditingAccount(null);
+    }} />
 
-      <AccountColumnCustomizer 
-        open={showColumnCustomizer} 
-        onOpenChange={setShowColumnCustomizer} 
-        columns={localColumns} 
-        onColumnsChange={setLocalColumns} 
-        onSave={saveColumns} 
-        isSaving={isSaving} 
-      />
+      <AccountColumnCustomizer open={showColumnCustomizer} onOpenChange={setShowColumnCustomizer} columns={localColumns} onColumnsChange={setLocalColumns} onSave={saveColumns} isSaving={isSaving} />
 
-      <AccountDeleteConfirmDialog 
-        open={showDeleteDialog} 
-        onConfirm={handleDelete} 
-        onCancel={() => {
-          setShowDeleteDialog(false);
-          setAccountToDelete(null);
-        }} 
-        isMultiple={false} 
-        count={1} 
-      />
+      <AccountDeleteConfirmDialog open={showDeleteDialog} onConfirm={handleDelete} onCancel={() => {
+      setShowDeleteDialog(false);
+      setAccountToDelete(null);
+    }} isMultiple={false} count={1} />
 
-      <AccountDetailModal
-        open={showDetailModal}
-        onOpenChange={setShowDetailModal}
-        account={viewingAccount}
-        onUpdate={fetchAccounts}
-        onEdit={(account) => {
-          setShowDetailModal(false);
-          setEditingAccount(account);
-          setShowModal(true);
-        }}
-      />
+      <AccountDetailModal open={showDetailModal} onOpenChange={setShowDetailModal} account={viewingAccount} onUpdate={fetchAccounts} onEdit={account => {
+      setShowDetailModal(false);
+      setEditingAccount(account);
+      setShowModal(true);
+    }} />
 
       <SendEmailModal open={emailModalOpen} onOpenChange={setEmailModalOpen} recipient={emailRecipient} />
-    </div>
-  );
+    </div>;
 });
-
 AccountTable.displayName = "AccountTable";
-
 export default AccountTable;
