@@ -595,6 +595,8 @@ const LeadTable = forwardRef<LeadTableRef, LeadTableProps>(({
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div className="flex items-center gap-3">
           <Select value={itemsPerPage.toString()} onValueChange={(value) => setItemsPerPage(Number(value))}>
             <SelectTrigger className="w-[100px]">
               <SelectValue />
