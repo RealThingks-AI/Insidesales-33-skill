@@ -11,6 +11,7 @@ import { BulkEmailModal, BulkEmailRecipient } from "@/components/BulkEmailModal"
 import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams } from "react-router-dom";
 
+// Leads page component
 const Leads = () => {
   const [searchParams] = useSearchParams();
   const initialStatus = searchParams.get('status') || 'all';
@@ -184,7 +185,7 @@ const Leads = () => {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 min-h-0 overflow-auto px-4 pt-2 pb-4">
+      <div className="flex-1 min-h-0 flex flex-col px-4 pt-2 pb-4">
         <LeadTable 
           ref={leadTableRef}
           showColumnCustomizer={showColumnCustomizer} 
