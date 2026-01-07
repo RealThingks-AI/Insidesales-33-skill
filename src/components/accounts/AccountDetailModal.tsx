@@ -296,10 +296,6 @@ export const AccountDetailModal = ({
                     <Pencil className="h-4 w-4" />
                     Update
                   </Button>}
-                <Button variant="outline" size="sm" onClick={() => setShowActivityLog(true)} className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Log Activity
-                </Button>
               </div>
             </div>
           </DialogHeader>
