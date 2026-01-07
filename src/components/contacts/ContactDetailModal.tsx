@@ -216,22 +216,6 @@ export const ContactDetailModal = ({
                     <Pencil className="h-4 w-4" />
                     Update
                   </Button>}
-                <Button variant="outline" size="sm" onClick={() => setShowEmailModal(true)} className="gap-2" disabled={!contact.email} title={!contact.email ? "No email address available" : "Send email to contact"}>
-                  <Send className="h-4 w-4" />
-                  Send Email
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setShowMeetingModal(true)} className="gap-2">
-                  <CalendarPlus className="h-4 w-4" />
-                  Schedule Meeting
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleRequestCreateTask} className="gap-2">
-                  <ListTodo className="h-4 w-4" />
-                  Create Task
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setShowActivityLogModal(true)} className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Log Activity
-                </Button>
               </div>
             </div>
           </DialogHeader>
