@@ -303,7 +303,7 @@ export const LeadDetailModal = ({
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
                 {onEdit && (
                   <Button
                     variant="outline"
@@ -315,44 +315,6 @@ export const LeadDetailModal = ({
                     Edit
                   </Button>
                 )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowEmailModal(true)}
-                  className="gap-2"
-                  disabled={!lead.email}
-                  title={!lead.email ? "No email address available" : "Send email to lead"}
-                >
-                  <Send className="h-4 w-4" />
-                  Send Email
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowMeetingModal(true)}
-                  className="gap-2"
-                >
-                  <CalendarPlus className="h-4 w-4" />
-                  Meeting
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRequestCreateTask}
-                  className="gap-2"
-                >
-                  <CheckSquare className="h-4 w-4" />
-                  Task
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowActivityLogModal(true)}
-                  className="gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Activity
-                </Button>
               </div>
             </div>
           </DialogHeader>

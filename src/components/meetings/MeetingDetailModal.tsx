@@ -286,15 +286,6 @@ export const MeetingDetailModal = ({
                     Join
                   </Button>
                 )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRequestCreateTask}
-                  className="gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Task
-                </Button>
                 {onEdit && (
                   <Button
                     variant="outline"
