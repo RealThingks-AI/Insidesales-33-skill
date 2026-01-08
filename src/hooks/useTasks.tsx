@@ -287,6 +287,15 @@ export const useTasks = () => {
             notification_type: 'task_updated',
           });
         }
+
+        // Notify assigned user on priority change (if not the updater)
+        if (updates.priority && updates.priority !== originalTask.priority && originalTask.assigned_to && originalTask.assigned_to !== user.id) {
+          await supabase.from('notifications').insert({
+            user_id: originalTask.assigned_to,
+            message: `Priority changed to ${updates.priority} for task: ${originalTask.title}`,
+            notification_type: 'task_updated',
+          });
+        }
       }
 
       return { taskId, updates };
@@ -304,6 +313,38 @@ export const useTasks = () => {
   // Delete task mutation
   const deleteTaskMutation = useMutation({
     mutationFn: async (taskId: string) => {
+      if (!user?.id) throw new Error('User not authenticated');
+
+      // Fetch task before deleting to get creator and assignee
+      const { data: taskToDelete } = await supabase
+        .from('tasks')
+        .select('title, created_by, assigned_to')
+        .eq('id', taskId)
+        .single();
+
+      const deleterName = await getCurrentUserName(user.id);
+
+      // Notify creator (if deleter is not the creator)
+      if (taskToDelete?.created_by && taskToDelete.created_by !== user.id) {
+        await supabase.from('notifications').insert({
+          user_id: taskToDelete.created_by,
+          message: `${deleterName} deleted task: ${taskToDelete.title}`,
+          notification_type: 'task_deleted',
+        });
+      }
+
+      // Notify assignee (if different from deleter and creator)
+      if (taskToDelete?.assigned_to && 
+          taskToDelete.assigned_to !== user.id && 
+          taskToDelete.assigned_to !== taskToDelete.created_by) {
+        await supabase.from('notifications').insert({
+          user_id: taskToDelete.assigned_to,
+          message: `${deleterName} deleted task: ${taskToDelete.title}`,
+          notification_type: 'task_deleted',
+        });
+      }
+
+      // Delete the task
       const { error } = await supabase
         .from('tasks')
         .delete()
