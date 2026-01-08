@@ -10,6 +10,7 @@ const sendTaskNotificationEmail = async (
   taskId: string,
   notificationType: string,
   recipientUserId: string,
+  senderUserId: string, // The user who performed the action
   taskTitle: string,
   taskDescription?: string,
   taskDueDate?: string,
@@ -23,6 +24,7 @@ const sendTaskNotificationEmail = async (
         taskId,
         notificationType,
         recipientUserId,
+        senderUserId,
         taskTitle,
         taskDescription,
         taskDueDate,
@@ -31,7 +33,7 @@ const sendTaskNotificationEmail = async (
         assigneeName,
       },
     });
-    console.log(`Task notification email sent: ${notificationType} to ${recipientUserId}`);
+    console.log(`Task notification email sent: ${notificationType} from ${senderUserId} to ${recipientUserId}`);
   } catch (error) {
     console.error('Failed to send task notification email:', error);
   }
@@ -121,12 +123,13 @@ export const useTasks = () => {
           notification_type: 'task_assigned',
         });
 
-        // Send email notification
+        // Send email notification - sender is the creator
         const creatorName = await getCurrentUserName(user.id);
         sendTaskNotificationEmail(
           data.id,
           'task_assigned',
           taskData.assigned_to,
+          user.id, // sender is the creator
           taskData.title,
           taskData.description,
           taskData.due_date,
@@ -173,29 +176,55 @@ export const useTasks = () => {
 
       // Create notifications for changes
       if (originalTask) {
-        // Notify on reassignment
-        if (updates.assigned_to && updates.assigned_to !== originalTask.assigned_to && updates.assigned_to !== user.id) {
-          await supabase.from('notifications').insert({
-            user_id: updates.assigned_to,
-            message: `You have been assigned a task: ${originalTask.title}`,
-            notification_type: 'task_assigned',
-          });
+        // Handle reassignment notifications
+        if (updates.assigned_to && updates.assigned_to !== originalTask.assigned_to) {
+          // Notify NEW assignee (if different from updater)
+          if (updates.assigned_to !== user.id) {
+            await supabase.from('notifications').insert({
+              user_id: updates.assigned_to,
+              message: `You have been assigned a task: ${originalTask.title}`,
+              notification_type: 'task_assigned',
+            });
 
-          // Send email notification for assignment
-          sendTaskNotificationEmail(
-            taskId,
-            'task_assigned',
-            updates.assigned_to,
-            originalTask.title,
-            originalTask.description || undefined,
-            originalTask.due_date || undefined,
-            originalTask.priority,
-            updaterName
-          );
+            // Send email notification for assignment - sender is the updater
+            sendTaskNotificationEmail(
+              taskId,
+              'task_assigned',
+              updates.assigned_to,
+              user.id, // sender is the updater
+              originalTask.title,
+              originalTask.description || undefined,
+              originalTask.due_date || undefined,
+              originalTask.priority,
+              updaterName
+            );
+          }
+
+          // Notify OLD assignee that they've been unassigned (if different from updater)
+          if (originalTask.assigned_to && originalTask.assigned_to !== user.id) {
+            await supabase.from('notifications').insert({
+              user_id: originalTask.assigned_to,
+              message: `You have been unassigned from task: ${originalTask.title}`,
+              notification_type: 'task_unassigned',
+            });
+
+            // Send email notification for unassignment - sender is the updater
+            sendTaskNotificationEmail(
+              taskId,
+              'task_unassigned',
+              originalTask.assigned_to,
+              user.id, // sender is the updater
+              originalTask.title,
+              originalTask.description || undefined,
+              originalTask.due_date || undefined,
+              originalTask.priority,
+              updaterName
+            );
+          }
         }
 
-        // Notify on status change (notify creator if assignee made the change)
-        if (updates.status && updates.status !== originalTask.status && originalTask.created_by && originalTask.created_by !== user.id) {
+        // Handle status change notifications
+        if (updates.status && updates.status !== originalTask.status) {
           const statusMessages: Record<string, string> = {
             'in_progress': `Task in progress: ${originalTask.title}`,
             'completed': `Task completed: ${originalTask.title}`,
@@ -203,26 +232,54 @@ export const useTasks = () => {
             'open': `Task reopened: ${originalTask.title}`,
           };
 
-          await supabase.from('notifications').insert({
-            user_id: originalTask.created_by,
-            message: statusMessages[updates.status] || `Task updated: ${originalTask.title}`,
-            notification_type: updates.status === 'completed' ? 'task_completed' : 'task_updated',
-          });
+          // Notify CREATOR (if updater is not the creator)
+          if (originalTask.created_by && originalTask.created_by !== user.id) {
+            await supabase.from('notifications').insert({
+              user_id: originalTask.created_by,
+              message: statusMessages[updates.status] || `Task updated: ${originalTask.title}`,
+              notification_type: updates.status === 'completed' ? 'task_completed' : 'task_updated',
+            });
 
-          // Send email notification for status change
-          sendTaskNotificationEmail(
-            taskId,
-            `status_${updates.status}` as any,
-            originalTask.created_by,
-            originalTask.title,
-            originalTask.description || undefined,
-            originalTask.due_date || undefined,
-            originalTask.priority,
-            updaterName
-          );
+            // Send email notification for status change - sender is the updater
+            sendTaskNotificationEmail(
+              taskId,
+              `status_${updates.status}` as any,
+              originalTask.created_by,
+              user.id, // sender is the updater
+              originalTask.title,
+              originalTask.description || undefined,
+              originalTask.due_date || undefined,
+              originalTask.priority,
+              updaterName
+            );
+          }
+
+          // Notify ASSIGNEE (if different from updater AND different from creator)
+          if (originalTask.assigned_to && 
+              originalTask.assigned_to !== user.id && 
+              originalTask.assigned_to !== originalTask.created_by) {
+            await supabase.from('notifications').insert({
+              user_id: originalTask.assigned_to,
+              message: statusMessages[updates.status] || `Task updated: ${originalTask.title}`,
+              notification_type: updates.status === 'completed' ? 'task_completed' : 'task_updated',
+            });
+
+            // Send email notification for status change - sender is the updater
+            sendTaskNotificationEmail(
+              taskId,
+              `status_${updates.status}` as any,
+              originalTask.assigned_to,
+              user.id, // sender is the updater
+              originalTask.title,
+              originalTask.description || undefined,
+              originalTask.due_date || undefined,
+              originalTask.priority,
+              updaterName
+            );
+          }
         }
 
-        // Notify assigned user on due date change
+        // Notify assigned user on due date change (if not the updater)
         if (updates.due_date && updates.due_date !== originalTask.due_date && originalTask.assigned_to && originalTask.assigned_to !== user.id) {
           await supabase.from('notifications').insert({
             user_id: originalTask.assigned_to,

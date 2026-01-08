@@ -85,12 +85,13 @@ async function sendEmailViaGraph(
   }
 }
 
-type NotificationType = "task_assigned" | "status_in_progress" | "status_completed" | "status_cancelled" | "status_open";
+type NotificationType = "task_assigned" | "task_unassigned" | "status_in_progress" | "status_completed" | "status_cancelled" | "status_open";
 
 interface TaskNotificationRequest {
   taskId: string;
   notificationType: NotificationType;
   recipientUserId: string;
+  senderUserId: string; // The user who performed the action
   taskTitle: string;
   taskDescription?: string;
   taskDueDate?: string;
@@ -103,6 +104,8 @@ const getEmailSubject = (type: NotificationType, taskTitle: string): string => {
   switch (type) {
     case "task_assigned":
       return `📋 New Task Assigned: ${taskTitle}`;
+    case "task_unassigned":
+      return `📋 Task Reassigned: ${taskTitle}`;
     case "status_in_progress":
       return `🔄 Task In Progress: ${taskTitle}`;
     case "status_completed":
@@ -133,6 +136,12 @@ const getEmailContent = (
         heading: "New Task Assigned to You",
         message: `<strong>${updatedByName || "Someone"}</strong> has assigned you a new task.`,
         color: "#3b82f6",
+      };
+    case "task_unassigned":
+      return {
+        heading: "Task Reassigned",
+        message: `<strong>${updatedByName || "Someone"}</strong> has reassigned this task to another user.`,
+        color: "#6b7280",
       };
     case "status_in_progress":
       return {
@@ -282,6 +291,7 @@ const handler = async (req: Request): Promise<Response> => {
       taskId,
       notificationType,
       recipientUserId,
+      senderUserId,
       taskTitle,
       taskDescription,
       taskDueDate,
@@ -290,7 +300,7 @@ const handler = async (req: Request): Promise<Response> => {
       assigneeName,
     }: TaskNotificationRequest = await req.json();
 
-    console.log(`Processing task notification: ${notificationType} for task ${taskId} to user ${recipientUserId}`);
+    console.log(`Processing task notification: ${notificationType} for task ${taskId} to user ${recipientUserId} from sender ${senderUserId}`);
 
     if (!taskId || !notificationType || !recipientUserId || !taskTitle) {
       return new Response(
@@ -304,27 +314,47 @@ const handler = async (req: Request): Promise<Response> => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Fetch recipient profile
-    const { data: profile, error: profileError } = await supabase
+    const { data: recipientProfile, error: recipientError } = await supabase
       .from("profiles")
       .select('id, full_name, "Email ID"')
       .eq("id", recipientUserId)
       .single();
 
-    if (profileError || !profile) {
-      console.error("Failed to fetch recipient profile:", profileError);
+    if (recipientError || !recipientProfile) {
+      console.error("Failed to fetch recipient profile:", recipientError);
       return new Response(
         JSON.stringify({ error: "Recipient not found" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const recipientEmail = profile["Email ID"];
+    const recipientEmail = recipientProfile["Email ID"];
     if (!recipientEmail) {
-      console.log(`No email found for user ${recipientUserId}`);
+      console.log(`No email found for recipient user ${recipientUserId}`);
       return new Response(
         JSON.stringify({ success: false, message: "Recipient has no email" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Fetch sender profile (the user who performed the action)
+    let senderEmail = recipientEmail; // Default fallback to recipient's email
+    let senderDisplayName = updatedByName || "CRM User";
+    
+    if (senderUserId) {
+      const { data: senderProfile, error: senderError } = await supabase
+        .from("profiles")
+        .select('id, full_name, "Email ID"')
+        .eq("id", senderUserId)
+        .single();
+
+      if (!senderError && senderProfile) {
+        senderEmail = senderProfile["Email ID"] || recipientEmail;
+        senderDisplayName = senderProfile.full_name || "CRM User";
+        console.log(`Sender profile found: ${senderDisplayName} (${senderEmail})`);
+      } else {
+        console.warn(`Could not fetch sender profile for ${senderUserId}, using recipient's email as fallback`);
+      }
     }
 
     // Check notification preferences
@@ -346,33 +376,35 @@ const handler = async (req: Request): Promise<Response> => {
     const emailHtml = generateEmailHtml(
       notificationType,
       taskTitle,
-      profile.full_name || "",
+      recipientProfile.full_name || "",
       taskDescription,
       taskDueDate,
       taskPriority,
-      updatedByName,
+      senderDisplayName, // Use sender's display name
       assigneeName,
       appUrl
     );
 
     const emailSubject = getEmailSubject(notificationType, taskTitle);
 
-    // For task notifications, use the recipient's own email as sender
-    // This makes the email appear as a self-notification
-    const senderEmail = recipientEmail;
+    // Use the action performer's email (sender) as the from address
+    // This ensures emails come from the person who made the change
+    const fromEmail = senderEmail;
+
+    console.log(`Sending email from ${fromEmail} to ${recipientEmail}`);
 
     // Send email directly via Azure Graph API
     const accessToken = await getAccessToken();
     await sendEmailViaGraph(
       accessToken,
       recipientEmail,
-      profile.full_name || "",
+      recipientProfile.full_name || "",
       emailSubject,
       emailHtml,
-      senderEmail
+      fromEmail
     );
 
-    console.log(`Task notification email sent successfully to ${recipientEmail}`);
+    console.log(`Task notification email sent successfully: ${notificationType} from ${fromEmail} to ${recipientEmail}`);
 
     return new Response(
       JSON.stringify({ success: true, message: "Notification email sent" }),
